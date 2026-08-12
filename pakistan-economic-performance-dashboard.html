@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pakistan Economic Performance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e17;
+    --bg-grid: rgba(232,234,242,0.035);
+    --panel:#121826;
+    --panel-2:#161e2e;
+    --border:#232b3d;
+    --text:#e7eaf2;
+    --muted:#8892a6;
+    --muted-dim:#5b6478;
+    --track:#1c2434;
+
+    --health:#2dd4bf;
+    --dynamism:#f5a623;
+    --resilience:#9b8cff;
+    --inclusion:#ff6e7f;
+    --sustain:#4ade80;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px) 0 0/40px 40px,
+      radial-gradient(ellipse at 20% -10%, #16203a 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding: 28px 20px 80px;
+  }
+
+  .wrap{ max-width:1180px; margin:0 auto; }
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:18px;
+    border-bottom:1px solid var(--border);
+    padding-bottom:22px;
+    margin-bottom:34px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    color:var(--muted);
+    display:flex; align-items:center; gap:8px;
+    margin-bottom:10px;
+  }
+  .live-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--sustain);
+    box-shadow:0 0 0 0 rgba(74,222,128,.6);
+    animation: pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(74,222,128,.55);}
+    70%{ box-shadow:0 0 0 7px rgba(74,222,128,0);}
+    100%{ box-shadow:0 0 0 0 rgba(74,222,128,0);}
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:clamp(26px, 3.4vw, 38px);
+    letter-spacing:-0.02em;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:13.5px;
+    max-width:520px;
+    margin-top:8px;
+    line-height:1.5;
+  }
+  .header-right{
+    text-align:right;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .header-right .ts{ color:var(--muted); font-size:11px; letter-spacing:.05em; }
+  #resetBtn{
+    margin-top:10px;
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    padding:7px 12px;
+    border-radius:3px;
+    cursor:pointer;
+    transition:.2s;
+  }
+  #resetBtn:hover{ border-color:var(--muted); color:var(--text); }
+
+  /* ---------- GAUGE HERO ---------- */
+  .hero{
+    background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:32px 24px 26px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:28px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 0%, rgba(155,140,255,0.08), transparent 60%);
+    pointer-events:none;
+  }
+  .gauge-shell{ width:100%; max-width:430px; position:relative; }
+  .gauge-shell svg{ width:100%; height:auto; display:block; }
+  .gauge-center{
+    position:absolute; left:0; right:0; top:57%; transform:translateY(-50%);
+    text-align:center;
+    pointer-events:none;
+  }
+  .gauge-score{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:64px;
+    line-height:1;
+    letter-spacing:-0.02em;
+  }
+  .gauge-score span{ font-size:22px; color:var(--muted); font-weight:500; }
+  .gauge-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.16em;
+    color:var(--muted);
+    margin-top:6px;
+  }
+  .gauge-band{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    margin-top:4px;
+    font-weight:600;
+  }
+
+  .legend{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:10px 22px;
+    margin-top:14px;
+    width:100%;
+  }
+  .legend-item{
+    display:flex; align-items:center; gap:8px;
+    font-size:12px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .legend-item .dot{ width:9px; height:9px; border-radius:2px; flex:none; }
+  .legend-item b{ color:var(--text); font-weight:600; margin-left:2px; }
+
+  /* ---------- CARDS GRID ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+    gap:16px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:20px 20px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    animation: rise .5s ease backwards;
+  }
+  @keyframes rise{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .card-title-row{ display:flex; align-items:center; gap:9px; }
+  .card-icon{ width:20px; height:20px; flex:none; }
+  .card-name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:15.5px;
+  }
+  .card-score{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:26px;
+    font-weight:600;
+    line-height:1;
+  }
+  .card-score span{ font-size:13px; color:var(--muted); font-weight:400; }
+
+  .mini-bar-track{
+    height:5px; border-radius:3px; background:var(--track); overflow:hidden;
+  }
+  .mini-bar-fill{ height:100%; border-radius:3px; transition:width .5s ease; }
+
+  .weight-row{
+    display:flex; align-items:center; gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--muted-dim);
+    letter-spacing:.04em;
+  }
+  .weight-row input[type=range]{ flex:1; accent-color: var(--accent); height:3px; }
+  .weight-row .wval{ color:var(--muted); min-width:34px; text-align:right; }
+
+  .indicators{ display:flex; flex-direction:column; gap:11px; margin-top:2px; }
+  .ind-row{ display:flex; flex-direction:column; gap:4px; }
+  .ind-top{
+    display:flex; justify-content:space-between;
+    font-size:12.5px; color:var(--text);
+  }
+  .ind-top .val{ font-family:'IBM Plex Mono', monospace; color:var(--muted); font-size:12px; }
+  .ind-source{
+    font-size:10.5px;
+    color:var(--muted-dim);
+    line-height:1.35;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    width:100%; height:4px; border-radius:2px;
+    background:var(--track);
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:13px; height:13px; border-radius:50%;
+    background:var(--accent);
+    border:2px solid #0a0e17;
+    box-shadow:0 0 0 1px var(--accent);
+    cursor:pointer;
+    margin-top:0;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:13px; height:13px; border-radius:50%;
+    background:var(--accent); border:2px solid #0a0e17;
+    box-shadow:0 0 0 1px var(--accent);
+    cursor:pointer;
+  }
+
+  footer{
+    margin-top:34px;
+    padding-top:18px;
+    border-top:1px solid var(--border);
+    color:var(--muted-dim);
+    font-size:11.5px;
+    line-height:1.6;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  footer b{ color:var(--muted); }
+
+  @media (max-width:640px){
+    .gauge-score{ font-size:48px; }
+    .hero{ padding:24px 16px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow"><span class="live-dot"></span> PAKISTAN · MACROECONOMIC INSTRUMENT PANEL</div>
+      <h1>Pakistan Economic Performance Dashboard</h1>
+      <p class="sub">Five dimensions, twenty indicators, scored from SBP, PBS, World Bank, IMF, WIPO and other primary sources as of August 2026. Adjust any indicator or dimension weight — the Economic Performance Score recalculates live.</p>
+    </div>
+    <div class="header-right">
+      <div class="ts" id="ts">DATA AS OF —</div>
+      <button id="resetBtn">RESET TO BASELINE</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="gauge-shell">
+      <svg id="gaugeSvg" viewBox="0 0 420 300"></svg>
+      <div class="gauge-center">
+        <div class="gauge-score" id="scoreNum">0<span>/100</span></div>
+        <div class="gauge-band" id="scoreBand">—</div>
+        <div class="gauge-label">ECONOMIC PERFORMANCE SCORE</div>
+      </div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="grid" id="cardGrid"></div>
+
+  <footer>
+    <b>Methodology —</b> each indicator is scored 0–100 (higher = better), converted from the latest reported figure using a simple benchmark scale (e.g. investment-to-GDP against an EM norm, GII rank against the full field). A dimension's score is the unweighted mean of its indicators. The composite Economic Performance Score is a weighted average of the five dimension scores, using the weight sliders in each panel (auto-normalized to sum to 100%). Bands: <b>0–39 Weak</b> · <b>40–59 Moderate</b> · <b>60–74 Solid</b> · <b>75–100 Strong</b>.
+    <br><br>
+    <b>Data —</b> baseline values are drawn from State Bank of Pakistan releases (reserves, Financial Stability Review 2025), Pakistan Bureau of Statistics (CPI, Labour Force Survey 2024–25), the Pakistan Economic Survey 2025–26, World Bank poverty/gender data, WIPO's Global Innovation Index 2025, StartupBlink, DataReportal, ILOSTAT and Carbon Brief/Enerdata — current as of August 2026. Hover the source line under each slider for its citation. This is a snapshot, not a live feed: figures update on request, not automatically, since most of these series are published monthly, quarterly or annually rather than in real time.
+  </footer>
+
+</div>
+
+<script>
+const DIMENSIONS = [
+  {
+    key:'health', name:'Economic Health', accent:'var(--health)', accentHex:'#2dd4bf', weight:20,
+    icon:'<path d="M2 12h4l2.5-7 4 14L15 9l2 3h5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    indicators:[
+      {key:'growth', label:'Growth', value:55, source:'SBP: FY26 real GDP growth forecast 3.75–4.75%'},
+      {key:'inflation', label:'Inflation', value:45, source:'PBS: CPI inflation 9.2% YoY, Jul 2026 — above SBP\'s 5–7% band'},
+      {key:'employment', label:'Employment', value:45, source:'PBS Labour Force Survey 2024–25: unemployment 7.1%, a 21-year high'},
+      {key:'investment', label:'Investment', value:25, source:'US State Dept ICS 2025 / SBP: investment-to-GDP ~13–14.5%, near a 50-year low'},
+    ]
+  },
+  {
+    key:'dynamism', name:'Economic Dynamism', accent:'var(--dynamism)', accentHex:'#f5a623', weight:20,
+    icon:'<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+    indicators:[
+      {key:'productivity', label:'Productivity', value:28, source:'ILO: avg. labour productivity growth ~1.5%/yr (2000–20), trailing regional peers'},
+      {key:'entrepreneurship', label:'Entrepreneurship', value:42, source:'StartupBlink 2025: ecosystem ranks #67 globally, value up 62% YoY'},
+      {key:'digitalization', label:'Digitalization', value:50, source:'DataReportal/PBS: 45.6% internet penetration, 64% broadband, IT exports +21% to $4.6bn'},
+      {key:'innovation', label:'Innovation', value:29, source:'WIPO Global Innovation Index 2025: rank 99 of 139 economies'},
+    ]
+  },
+  {
+    key:'resilience', name:'Economic Resilience', accent:'var(--resilience)', accentHex:'#9b8cff', weight:20,
+    icon:'<path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5l-8-3z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>',
+    indicators:[
+      {key:'shock', label:'Shock absorption', value:42, source:'SBP: liquid FX reserves $22.7bn (Jul 2026), ≈3.4 months of import cover'},
+      {key:'recovery', label:'Recovery speed', value:52, source:'SBP/ADB: growth rebuilding from 2023 crisis, inflation down from a 38% peak to single digits'},
+      {key:'finstability', label:'Financial stability', value:72, source:'SBP Financial Stability Review 2025: CAR 20.8%, NPLs 6.1% and falling'},
+    ]
+  },
+  {
+    key:'inclusion', name:'Economic Inclusion', accent:'var(--inclusion)', accentHex:'#ff6e7f', weight:20,
+    icon:'<path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M12.5 14.6c.7-.4 1.6-.6 2.5-.6 3.3 0 6.5 2.2 6.5 5.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    indicators:[
+      {key:'households', label:'Households', value:30, source:'Pakistan Economic Survey 2025–26: national poverty rate 28.9%, up from 21.9%'},
+      {key:'smes', label:'SMEs', value:22, source:'CCP/SBP: SMEs ~40% of GDP but only 6–7% of private-sector credit'},
+      {key:'women', label:'Women', value:28, source:'World Bank/Gallup Pakistan: female labour force participation ~24–27%'},
+      {key:'youth', label:'Youth', value:38, source:'World Bank Gender Data 2026: youth unemployment ~9–13%, wide NEET gaps by gender'},
+      {key:'regional', label:'Regional disparities (narrowness)', value:30, source:'Economic Survey 2025–26: Gini up to 32.7; poverty 23.3% Punjab vs 47.0% Balochistan'},
+    ]
+  },
+  {
+    key:'sustain', name:'Economic Sustainability', accent:'var(--sustain)', accentHex:'#4ade80', weight:20,
+    icon:'<path d="M12 3C7 6 5 10 5 14a7 7 0 0 0 14 0c0-4-2-8-7-11z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M12 21V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    indicators:[
+      {key:'energy', label:'Energy (clean mix)', value:58, source:'lowcarbonpower.org 2025: ~64% of electricity from low-carbon sources, incl. 25% solar'},
+      {key:'carbon', label:'Carbon', value:55, source:'Carbon Brief/Enerdata: low per-capita emissions globally, but ~70% of primary energy supply still fossil'},
+      {key:'water', label:'Water', value:28, source:'UN World Water Development Report: ~1,000 m³/capita renewable water — "high stress" territory'},
+      {key:'resource', label:'Resource efficiency', value:40, source:'Indicative — high T&D losses and informal-economy inefficiencies partly offset by new efficiency policy'},
+    ]
+  },
+];
+
+const BASELINE = JSON.parse(JSON.stringify(DIMENSIONS));
+
+function dimScore(dim){
+  const sum = dim.indicators.reduce((a,i)=>a+i.value,0);
+  return sum / dim.indicators.length;
+}
+function composite(){
+  const totalW = DIMENSIONS.reduce((a,d)=>a+d.weight,0) || 1;
+  const sum = DIMENSIONS.reduce((a,d)=>a + dimScore(d) * (d.weight/totalW), 0);
+  return sum;
+}
+function band(score){
+  if(score < 40) return ['Weak', '#ff6e7f'];
+  if(score < 60) return ['Moderate', '#f5a623'];
+  if(score < 75) return ['Solid', '#2dd4bf'];
+  return ['Strong', '#4ade80'];
+}
+
+/* ---------- GAUGE (SVG) ---------- */
+const CX = 210, CY = 220;
+const START = -135, END = 135; // 270deg sweep
+const RADII = [172, 150, 128, 106, 84];
+
+function polar(cx,cy,r,angle){
+  const a = (angle-90) * Math.PI/180;
+  return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a) };
+}
+function arcPath(cx,cy,r,a0,a1){
+  const p0 = polar(cx,cy,r,a0);
+  const p1 = polar(cx,cy,r,a1);
+  const large = (a1-a0) <= 180 ? 0 : 1;
+  return `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${large} 1 ${p1.x} ${p1.y}`;
+}
+
+function buildGauge(){
+  const svg = document.getElementById('gaugeSvg');
+  svg.innerHTML = '';
+  DIMENSIONS.forEach((dim, i)=>{
+    const r = RADII[i];
+    // track
+    const track = document.createElementNS('http://www.w3.org/2000/svg','path');
+    track.setAttribute('d', arcPath(CX,CY,r,START,END));
+    track.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+    track.setAttribute('stroke-width','10');
+    track.setAttribute('fill','none');
+    track.setAttribute('stroke-linecap','round');
+    svg.appendChild(track);
+    // fill
+    const fill = document.createElementNS('http://www.w3.org/2000/svg','path');
+    fill.setAttribute('d', arcPath(CX,CY,r,START,END));
+    fill.setAttribute('stroke', dim.accentHex);
+    fill.setAttribute('stroke-width','10');
+    fill.setAttribute('fill','none');
+    fill.setAttribute('stroke-linecap','round');
+    fill.setAttribute('id', 'arc-'+dim.key);
+    fill.style.transition = 'stroke-dashoffset .55s cubic-bezier(.4,0,.2,1)';
+    fill.style.filter = 'drop-shadow(0 0 4px '+dim.accentHex+'55)';
+    svg.appendChild(fill);
+  });
+}
+
+function updateGauge(){
+  DIMENSIONS.forEach(dim=>{
+    const el = document.getElementById('arc-'+dim.key);
+    const L = el.getTotalLength();
+    const pct = Math.max(0, Math.min(100, dimScore(dim))) / 100;
+    el.style.strokeDasharray = L;
+    el.style.strokeDashoffset = L * (1 - pct);
+  });
+  const score = composite();
+  document.getElementById('scoreNum').innerHTML = Math.round(score) + '<span>/100</span>';
+  const [label, color] = band(score);
+  const bandEl = document.getElementById('scoreBand');
+  bandEl.textContent = label;
+  bandEl.style.color = color;
+}
+
+/* ---------- LEGEND ---------- */
+function buildLegend(){
+  const legend = document.getElementById('legend');
+  legend.innerHTML = DIMENSIONS.map(d=>`
+    <div class="legend-item">
+      <span class="dot" style="background:${d.accentHex}"></span>
+      ${d.name} <b id="legendval-${d.key}">0</b>
+    </div>
+  `).join('');
+}
+function updateLegend(){
+  DIMENSIONS.forEach(d=>{
+    document.getElementById('legendval-'+d.key).textContent = Math.round(dimScore(d));
+  });
+}
+
+/* ---------- CARDS ---------- */
+function buildCards(){
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = DIMENSIONS.map((dim, idx)=>`
+    <div class="card" style="animation-delay:${idx*60}ms; --accent:${dim.accentHex}">
+      <div class="card-top">
+        <div class="card-title-row">
+          <svg class="card-icon" viewBox="0 0 24 24" style="color:${dim.accentHex}">${dim.icon}</svg>
+          <div class="card-name">${dim.name}</div>
+        </div>
+        <div class="card-score" id="cardscore-${dim.key}" style="color:${dim.accentHex}">0<span>/100</span></div>
+      </div>
+      <div class="mini-bar-track"><div class="mini-bar-fill" id="minibar-${dim.key}" style="background:${dim.accentHex}; width:0%"></div></div>
+      <div class="weight-row">
+        WEIGHT IN COMPOSITE
+        <input type="range" min="0" max="100" value="${dim.weight}" data-weight="${dim.key}">
+        <span class="wval" id="wval-${dim.key}">20%</span>
+      </div>
+      <div class="indicators">
+        ${dim.indicators.map(ind=>`
+          <div class="ind-row">
+            <div class="ind-top"><span>${ind.label}</span><span class="val" id="val-${dim.key}-${ind.key}">${ind.value}</span></div>
+            <input type="range" min="0" max="100" value="${ind.value}" data-dim="${dim.key}" data-ind="${ind.key}">
+            <div class="ind-source">${ind.source || ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('input[data-dim]').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const dk = e.target.dataset.dim, ik = e.target.dataset.ind;
+      const dim = DIMENSIONS.find(d=>d.key===dk);
+      const ind = dim.indicators.find(i=>i.key===ik);
+      ind.value = +e.target.value;
+      document.getElementById(`val-${dk}-${ik}`).textContent = ind.value;
+      refreshAll();
+    });
+  });
+  grid.querySelectorAll('input[data-weight]').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const dk = e.target.dataset.weight;
+      const dim = DIMENSIONS.find(d=>d.key===dk);
+      dim.weight = +e.target.value;
+      refreshAll();
+    });
+  });
+}
+
+function updateCards(){
+  const totalW = DIMENSIONS.reduce((a,d)=>a+d.weight,0) || 1;
+  DIMENSIONS.forEach(dim=>{
+    const s = dimScore(dim);
+    document.getElementById('cardscore-'+dim.key).innerHTML = Math.round(s)+'<span>/100</span>';
+    document.getElementById('minibar-'+dim.key).style.width = s+'%';
+    document.getElementById('wval-'+dim.key).textContent = Math.round(dim.weight/totalW*100)+'%';
+  });
+}
+
+function refreshAll(){
+  updateGauge();
+  updateLegend();
+  updateCards();
+}
+
+function setTimestamp(){
+  document.getElementById('ts').textContent = 'DATA AS OF AUG 2026 · VIEWED ' + new Date().toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}).toUpperCase();
+}
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  DIMENSIONS.forEach((d,i)=>{
+    d.weight = BASELINE[i].weight;
+    d.indicators.forEach((ind,j)=>{ ind.value = BASELINE[i].indicators[j].value; });
+  });
+  buildCards();
+  refreshAll();
+});
+
+buildGauge();
+buildLegend();
+buildCards();
+refreshAll();
+setTimestamp();
+</script>
+</body>
+</html>
